@@ -17,6 +17,22 @@ supported.patchlevels=
 supported.vendorpatchlevels=
 '; } # end properties
 
+choose() {
+    # note from chainfire @xda-developers: getevent behaves weird when piped, and busybox grep likes that even less than toolbox/toybox grep
+    while true; do
+        /system/bin/getevent -lc 1 2>&1 | /system/bin/grep VOLUME | /system/bin/grep " DOWN" > $INSTALLER/events
+        if (`cat $INSTALLER/events 2>/dev/null | /system/bin/grep VOLUME >/dev/null`); then
+            break
+        fi
+    done
+
+    if (`cat $INSTALLER/events 2>/dev/null | /system/bin/grep VOLUMEUP >/dev/null`); then
+        return 0
+    else
+        return 1
+    fi
+}
+
 
 ### AnyKernel install
 ## boot files attributes
@@ -34,8 +50,32 @@ PATCH_VBMETA_FLAG=auto;
 # import functions/variables and setup patching - see for reference (DO NOT REMOVE)
 . tools/ak3-core.sh;
 
+
+if [ -z $BPF ]; then
+	FUNCTION=choose
+	ui_print "Should bpf uname spoofing be disabled?"
+	ui_print "Choose Yes (Vol Up) if you're experiencing bootloop on <=A13 after flashing"
+	ui_print "(flash this zip again after booting into recovery again)"
+	ui_print ""
+	ui_print "+ Volume Up = Yes, disable it"
+	ui_print "- Volume Down = No, keep it enabled (A15+)"
+	if $FUNCTION; then
+		BPF=true
+		ui_print "Disabling bpf uname spoofing"
+	else
+		BPF=false
+		ui_print "Keeping bpf uname spoofing enabled"
+	fi
+fi
+
+
+
 # boot install
 dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+
+if $BPF; then
+	patch_cmdline "android.legacy_ebpf" "android.legacy_ebpf=1"
+fi
 
 write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
 ## end boot install
