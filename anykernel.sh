@@ -54,11 +54,11 @@ PATCH_VBMETA_FLAG=auto;
 if [ -z $BPF ]; then
 	FUNCTION=choose
 	ui_print "Should bpf uname spoofing be disabled?"
-	ui_print "Choose Yes (Vol Up) if you're experiencing bootloop on <=A13 after flashing"
+	ui_print "Choose Yes (Vol Up) if you're experiencing bootloop after flashing"
 	ui_print "(flash this zip again after booting into recovery again)"
 	ui_print ""
 	ui_print "+ Volume Up = Yes, disable it"
-	ui_print "- Volume Down = No, keep it enabled (A15+)"
+	ui_print "- Volume Down = No, keep it enabled (recommended)"
 	if $FUNCTION; then
 		BPF=true
 		ui_print "Disabling bpf uname spoofing"
